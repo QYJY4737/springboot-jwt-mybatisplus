@@ -1,0 +1,86 @@
+SpringBoot系列——WebMvcConfigurer介绍
+为什么要使用WebMvcConfigurer？
+WebMvcConfigurer是一个接口，提供很多自定义的拦截器，例如跨域设置、类型转化器等等。可以说此接口为开发者提前想到了很多拦截层面的需求，方便开发者自由选择使用。由于Spring5.0废弃了WebMvcConfigurerAdapter，所以WebMvcConfigurer继承了WebMvcConfigurerAdapter大部分内容。
+
+WebMvcConfigurer方法介绍
+由于内容太多，只展示3个关键的接口，用的比较少的，只是阐述下含义，不再详解，用的更少的，就不看了，毕竟十多个方法呢...
+
+1.configurePathMatch(PathMatchConfigurer configurer)
+这个用到的比较少，这个是和访问路径有关的。举个例子，比如说PathMatchConfigurer 有个配置是setUseTrailingSlashMatch(),如果设置为true的话（默认为true），后面加个斜杠并不影响路径访问，例如“/user”等同于“/user/"。我们在开发中很少在访问路径上搞事情，所以这个方法如果有需要的请自行研究吧。
+
+2.configureContentNegotiation(ContentNegotiationConfigurer configurer)
+这个东西直译叫做内容协商机制，主要是方便一个请求路径返回多个数据格式。ContentNegotiationConfigurer这个配置里面你会看到MediaType，里面有众多的格式。此方法不在多赘述。
+
+3.configureAsyncSupport(AsyncSupportConfigurer configurer)
+顾名思义，这是处理异步请求的。只能设置两个值，一个超时时间（毫秒，Tomcat下默认是10000毫秒，即10秒），还有一个是AsyncTaskExecutor，异步任务执行器。
+
+4.configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer)
+这个接口可以实现静态文件可以像Servlet一样被访问。
+
+5.addFormatters(FormatterRegistry registry)
+增加转化器或者格式化器。这边不仅可以把时间转化成你需要时区或者样式。还可以自定义转化器和你数据库做交互，比如传进来userId，经过转化可以拿到user对象。
+
+6.addInterceptors(InterceptorRegistry registry)
+盼望着，盼望着，你一个常用的方法来了。这个方法可以自定义写拦截器，并指定拦截路径。来，咱们写一个拦截器。
+
+public class MyInterceptor implements HandlerInterceptor {
+    @Override
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("preHandle,ok,假设给你一个true，运行去吧");
+        return true;
+    }
+    @Override
+    public void postHandle(HttpServletRequest request,
+                           HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("postHandle,ok,看看我什么时候运行的。");
+    }
+    @Override
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("afterCompletion,ok,看完不点个赞再走吗？");
+    }
+}
+然后配置一下：
+
+@Configuration
+public class MyConfigurer implements WebMvcConfigurer {
+    @Bean
+    public MyInterceptor getMyInterceptor(){
+        return  new MyInterceptor();
+    }
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(this.getMyInterceptor())
+        .addPathPatterns("/abc","/configurePathMatch");
+    }
+}
+可以看出addPathPatterns()里面可以尝试添加多个路径，或者写成”/**“，包含所有路径都需要尝试拦截一下。
+
+测试一下，输出：
+
+preHandle,ok,假设给你一个true，运行去吧
+===》执行业务逻辑===》
+postHandle,ok,看看我什么时候运行的。
+afterCompletion,ok,看完不点个赞再走吗？
+7.addResourceHandlers(ResourceHandlerRegistry registry)
+自定义资源映射。这个东西也比较常用，业务场景就是自己的服务器作为文件服务器，不利用第三方的图床，就需要一个虚拟路径映射到我们服务器的地址。值得一提的是，如果你的项目是war包启动，一般都是再Tomcat中配置一下（配置方法请百度）；如果是jar包启动（SpringBoot经常用这种方式启动），就可以用到这个方法了。例如：
+
+ public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    registry.addResourceHandler("/my/**")
+    .addResourceLocations("file:E:/my/");
+    super.addResourceHandlers(registry);
+}
+真实路径，wndows当服务器的情况下，前面一定要加上一个file:。
+
+8.addCorsMappings(CorsRegistry registry)
+这个是设置跨域问题的，几乎是每个后台服务器都需要配置的东西。我曾写过一篇文章，专门讲跨域问题和SpringBoot怎么配置的，请查询：
+https://juejin.im/post/5cfe6367f265da1b9163887f
+
+9.addViewControllers(ViewControllerRegistry registry)
+这个方法可以实现，一个路径自动跳转到一个页面。不过现在多为前后端分离的项目，是不是可以把跳转路由的问题直接扔给前端。
+
+后面还有七个：configureViewResolvers、addArgumentResolvers、addReturnValueHandlers、configureMessageConverters、extendMessageConverters、configureHandlerExceptionResolvers、extendHandlerExceptionResolvers。是在用的太少了，就不再看了。
+
+小结
+本篇先大概知道下这些都是什么方法，最重要的是知道了WebMvcConfigurer为我们再拦截层做了一些通用拦截器，方便开发者使用。当然也可以自己实现拦截器。最常用的是还是6、7、8。其他的以后有机会研究好了再更新。

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.congee.api.mapper.UserKmmyMapper">
+    <resultMap id="userKmmyMap" type="cn.congee.api.entity.UserKmmy">
+        <id column="userid" jdbcType="BIGINT" property="userid"></id>
+        <result column="email" jdbcType="VARCHAR" property="email" />
+        <result column="phone" jdbcType="VARCHAR" property="phone" />
+        <result column="usertype" jdbcType="INTEGER" property="usertype" />
+        <result column="subuser" jdbcType="TINYINT" property="subuser" />
+        <result column="uname" jdbcType="VARCHAR" property="uname" />
+        <result column="passwd" jdbcType="CHAR" property="passwd" />
+        <result column="isactive" jdbcType="TINYINT" property="isactive" />
+        <result column="salt" jdbcType="CHAR" property="salt" />
+        <result column="head_img" jdbcType="VARCHAR" property="headImg" />
+        <result column="locked" jdbcType="TINYINT" property="locked" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="last_login_time" jdbcType="TIMESTAMP" property="lastLoginTime" />
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    </resultMap>
+    <sql id="userKmmyList">
+        userid,email,phone,usertype,subuser,uname,passwd,isactive,salt,head_img,locked,create_time,last_login_time,update_time
+    </sql>
+    <select id="getOne" parameterType="java.lang.String" resultMap="userKmmyMap">
+        SELECT
+        <include refid="userKmmyList" />
+        FROM
+        user_kmmy
+        WHERE
+        uname = #{uname,jdbcType = VARCHAR}
+        AND
+        1 = 1
+    </select>
+    <insert id="saveUserKmmy" parameterType="cn.congee.api.entity.UserKmmy">
+        INSERT INTO
+        user_kmmy(userid,email,phone,usertype,subuser,uname,passwd,isactive,salt,head_img,locked,create_time,last_login_time,update_time)
+        VALUES
+        (#{userid,jdbcType = BIGINT},
+        #{email,jdbcType = VARCHAR},
+        #{phone,jdbcType = VARCHAR},
+        #{usertype,jdbcType = INTEGER},
+        #{subuser,jdbcType = TINYINT},
+        #{uname,jdbcType = VARCHAR},
+        #{passwd,jdbcType = CHAR},
+        #{isactive,jdbcType = TINYINT},
+        #{salt,jdbcType = CHAR},
+        #{headImg,jdbcType = VARCHAR},
+        #{locked,jdbcType = TINYINT},
+        #{createTime,jdbcType = TIMESTAMP},
+        #{lastLoginTime,jdbcType = TIMESTAMP},
+        #{updateTime,jdbcType = TIMESTAMP})
+    </insert>
+    <update id="updateUserKmmyLastLoginTime" parameterType="cn.congee.api.entity.UserKmmy">
+        UPDATE
+        user_kmmy
+        SET
+        last_login_time = #{lastLoginTime,jdbcType = TIMESTAMP}
+        WHERE
+        userid = #{userid,jdbcType = BIGINT}
+        AND
+        1 = 1
+    </update>
+</mapper>

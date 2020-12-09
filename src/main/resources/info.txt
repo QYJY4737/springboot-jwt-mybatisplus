@@ -1,0 +1,90 @@
+类型      大小                范围                                                        格式                            用途
+DATE      3                  1000-01-01/9999-12-31                                       YYYY-MM-DD                     日期值
+TIME      3                  '-838:59:59'/'838:59:59'                                    HH:MM:SS                       时间值或持续时间
+YEAR      1                  1901/2155                                                   YYYY                           年份值
+DATETIME  8                  1000-01-01 00:00:00/9999-12-31 23:59:59                     YYYY-MM-DD HH:MM:SS            混合日期和时间值
+TIMESTAMP 4                  1970-01-01 00:00:00/2038                                    YYYYMMDD HHMMSS                混合日期和时间值，时间戳
+                             结束时间是第2147483647秒，北京时间2038-1-19
+                             11:14:07,格林尼治时间2038年1月19日凌晨03:14:07
+
+lombok
+@Accessors
+Accessor的中文含义是存取器，@Accessors用于配置getter和setter方法的生成结果，下面介绍三个属性
+
+fluent
+fluent的中文含义是流畅的，设置为true，则getter和setter方法的方法名都是基础属性名，且setter方法返回当前对象。如下
+
+@Data
+@Accessors(fluent = true)
+public class User {
+    private Long id;
+    private String name;
+
+    // 生成的getter和setter方法如下，方法体略
+    public Long id() {}
+    public User id(Long id) {}
+    public String name() {}
+    public User name(String name) {}
+}
+
+chain
+chain的中文含义是链式的，设置为true，则setter方法返回当前对象。如下
+
+@Data
+@Accessors(chain = true)
+public class User {
+    private Long id;
+    private String name;
+
+    // 生成的setter方法如下，方法体略
+    public User setId(Long id) {}
+    public User setName(String name) {}
+}
+
+prefix
+prefix的中文含义是前缀，用于生成getter和setter方法的字段名会忽视指定前缀（遵守驼峰命名）。如下
+
+@Data
+@Accessors(prefix = "p")
+class User {
+	private Long pId;
+	private String pName;
+
+	// 生成的getter和setter方法如下，方法体略
+	public Long getId() {}
+	public void setId(Long id) {}
+	public String getName() {}
+	public void setName(String name) {}
+}
+
+概况
+@Accessors 注解用来配置lombok如何产生和显示getters和setters的方法。
+默认情况下，lombok按照豆豆说明书产生getters和setters：例如一个名为pepper(弗兰特产辣椒，lombok的logo是一只小辣椒)属性的getter方法是getPepper。然而一些人可能为了一个更好看的API，想去打破豆豆说明书。@Acessors就是让我们做这个的。
+
+一些程序员喜欢为他们的属性使用前缀。例如，他们用fPepper(fancy pepper? 豆豆跟pepper还是挺配哒)代替pepper。因为你不能用单元测试你的前缀的有效性，并且重构脚本可能将睡醒转化为局部变量或者方法的名字，我们强烈建议别这样做。并且，你的工具(例如你的编辑器)可以用特定的方法将标识符转向，如果你想这些信息被立马可见的话。然而，你也可以通过@Accessor列出你工程里所有的前缀。
+@Accessors 因此有3个选择：
+1. fluent 一个布尔值。如果为真，pepper的getter就是 pepper()，setter方法就是pepper(T newValue)。并且，除非特别说明，chain默认为真。
+2. chain 一个布尔值。如果为真，产生的setter返回的this而不是void。默认是假。如果fluent=true，那么chain默认为真。
+set方法返回的是对象的实例，因此可以直接再使用set方法或者直接调用函数
+3. prefix 一系列string类型。如果显示，属性必须加上某些定义的前缀。每个属性名反过来与列表中的每个前缀进行比较，一个找到一个匹配，这个前缀被提取出来为属性创建基本的名字。前缀列表中不包含任何前缀也是合法的，为空则总是匹配。字符都是字母，紧接着前缀后的字符一定不能是小写字母。例如，pepper对前缀p不是相等匹配，而跟pEpper是匹配的(也就意味着属性的基本名字是epper)。
+@Accessors注解可以在类和属性上使用。如果使用，这个注解应用在一个属性上，否则应用在这个类上。如果一个@Accessors注解在了一个属性，再对那个属性的类的@Accessors注解就会被忽略。
+也就是在属性上增加注解，在类上的注解就会自动忽略；
+使用前缀，匹配有前缀+大写字母这样的匹配才能自动生成忽略前缀的get方法和set方法。
+
+支持的配置关键字
+lombok.assessors.chain=[true|false](default:false)
+如果设置为true,没有任何类被@Accessors注解，或者有类被注解但是没有为chain参数显式赋值，则表现为@Accessors(chain=true)
+
+lombok.accessors.fluent=[ true | false](default:false)
+如果设置为真，没有任何类被@Accessors注解，或者有类被注解对fluent参数没有显式赋值，则表现为@Accessors(fluent=true)
+
+lombok.accessors.prefix+=afield prefix(default:empty list)
+这是一个列表属性；条目可以通过 +=操作符添加。从父配置文件继承的前缀可以通过-=操作符移除。没有任何类被@Accessors注解，或者有类被注解但是注解对prefix参数显式的赋值，则表现为
+@Accessors(prefix={prefixes listed in configuration})
+
+lombok.accessors.flagUsage=[warning | error](default:not set)
+如果配置了，lombok标出每个使用了@Accessors注解为一个警告还是一个错误。
+
+附属细则
+@Accessors注解也用在lombok不同的寻找getters的方法中，例如@EqualsAndHashCode(不懂)
+如果提供了前缀列表，属性名没有一个以其中的一个前缀开头，则属性会被lombok完全忽略掉，并且会产生一个警告。
